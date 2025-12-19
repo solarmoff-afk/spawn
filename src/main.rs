@@ -7,6 +7,7 @@
 mod build_system;
 mod parser;
 mod frontend;
+mod resolver;
 
 use build_system::{BuildSystem, Actions};
 
@@ -18,7 +19,8 @@ fn main() {
         Actions::build_apk => {
             let paths = get_paths(build_system.args.clone());
             if paths.is_empty() {
-                panic!("No toml file provided. Usage: spawn apk <file.toml>");
+                build_system.print_help();
+                panic!("No toml file provided");
             }
 
             let config = frontend::prepare(paths)
@@ -39,6 +41,6 @@ fn get_paths(args: Vec<String>) -> Vec<String> {
     if args.len() >= 3 {
         return args[2..].to_vec();
     }
-    
+
     vec![]
 }
