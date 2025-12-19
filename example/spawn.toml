@@ -1,27 +1,16 @@
 [package]
 package = "com.example.myapp"
 version = "1.0.0"
-version-code = 100
-label = "MyApp"
-icon = "icon.png"
+version_code = 1
+label = "My Super App"
+min_sdk = 21
+target_sdk = 36
 
-[sdk]
-min-sdk = "21"
-target-sdk = "34"
-
-[manifest]
-permission = [
-    "android.permission.INTERNET",
-    "android.permission.ACCESS_NETWORK_STATE"
+repositories = [
+    "https://maven.google.com",
+    "https://repo1.maven.org/maven2"
 ]
-extract-native-libs = true 
 
-[sign.debug]
-store-file = "debug.keystore"
-key-alias = "androiddebugkey"
-
-[task.resource]
-compile = "aapt2 compile --dir res ..."
-
-[options]
-verbose = true
+[dependencies]
+"androidx.appcompat:appcompat" = "1.6.1"
+"com.google.android.material:material" = "1.9.0"

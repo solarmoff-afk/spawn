@@ -1,6 +1,6 @@
 [package]
 name = "spawn"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 
 [dependencies]
@@ -8,3 +8,5 @@ thiserror = "1.0"
 colored = "3.0.0"
 serde = { version = "1.0", features = ["derive"] }
 toml = "0.8"
+walkdir = "2.4"
+quick-xml = "0.31"
