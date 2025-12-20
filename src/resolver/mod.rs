@@ -71,7 +71,8 @@ impl Resolver {
     pub fn resolve(&mut self, root_coords: Vec<String>) {
         let mut queue: Vec<Artifact> = root_coords.iter()
             .filter_map(|c| {
-                Artifact::from_coords(c)
+                let parsed = Artifact::from_coords(c);
+                parsed
             })
             .collect();
         let mut visited = HashSet::new();
@@ -82,31 +83,52 @@ impl Resolver {
             let mut next_queue = Vec::new();
             for art in queue {
                 let id = art.id();
+                let mut proceed = false;
 
                 if let Some(existing) = self.resolved_artifacts.get(&id) {
                     // семантическое сравнение версий
                     let cmp = version_compare::compare(&art.version, &existing.version)
                         .unwrap_or(version_compare::Cmp::Eq);
+                    
+                    match cmp {
+                        version_compare::Cmp::Gt => {
+                            proceed = true;
+                        }
+                        
+                        version_compare::Cmp::Lt => {
+                            proceed = false;
+                        }
+                        
+                        version_compare::Cmp::Eq => {
+                            proceed = false;
+                        }
 
-                    if cmp != version_compare::Cmp::Gt {
-                        continue;
+                        _ => {
+                            proceed = true;
+                        }
                     }
+                } else {
+                    proceed = true;
                 }
                 
-                self.resolved_artifacts.insert(id.clone(), art.clone());
+                if proceed {
+                    self.resolved_artifacts.insert(id.clone(), art.clone());
 
-                if let Ok(pom_path) = self.fetch_artifact(&art, "pom") {
-                    if let Ok(xml) = fs::read_to_string(pom_path) {
-                        let pom_data = pom::parse(&xml, &art);
-                        println!(" Resolved {} ({} deps)", art, pom_data.dependencies.len());
-                        
-                        for dep in pom_data.dependencies {
-                            let trans_art = dep.artifact;
-                            let v_id = format!("{}:{}", trans_art.id(), trans_art.version);
+                    let fetch_result = self.fetch_artifact(&art, "pom");
+                    if let Ok(pom_path) = fetch_result {
+                        let read_result = fs::read_to_string(pom_path);
+                        if let Ok(xml) = read_result {
+                            let pom_data = pom::parse(&xml, &art);
+                            println!(" Resolved {} ({} deps)", art, pom_data.dependencies.len());
                             
-                            if !visited.contains(&v_id) {
-                                visited.insert(v_id);
-                                next_queue.push(trans_art);
+                            for dep in pom_data.dependencies {
+                                let trans_art = dep.artifact;
+                                let v_id = format!("{}:{}", trans_art.id(), trans_art.version);
+                                
+                                if !visited.contains(&v_id) {
+                                    visited.insert(v_id);
+                                    next_queue.push(trans_art);
+                                }
                             }
                         }
                     }
