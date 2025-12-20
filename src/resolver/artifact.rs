@@ -17,7 +17,7 @@ impl Artifact {
         // можно просто вывести варн и вернуть артефакт с именем INVALID
         // потому-что потому
         if name == "*" {
-            eprintln!("WARN: Skipping invalid artifact with name '*'");
+            warn!("Skipping invalid artifact with name '*'");
             
             Self {
                 group: group.trim().to_string(),

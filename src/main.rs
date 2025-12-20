@@ -4,6 +4,9 @@
 // https://www.eclipse.org/legal/epl-2.0/
 // SPDX-License-Identifier: EPL-2.0
 
+#[macro_use]
+mod logger;
+
 mod build_system;
 mod parser;
 mod frontend;

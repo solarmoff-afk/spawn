@@ -56,10 +56,10 @@ pub fn prepare(paths: Vec<String>) -> Result<parser::Config, Box<dyn std::error:
                 fs::write(&lock_file, current_fingerprint)?;
             }
 
-            eprintln!("{} Some dependencies failed to download. Cache lock not written", "WARN:".yellow());
-            eprintln!("Run the build again or check your network connection");
+            warn!("Some dependencies failed to download. Cache lock not written");
+            info!("Run the build again or check your network connection");
         } else {
-            println!("{} Dependencies are up-to-date", "CACHED:".green());
+            info!("{} Dependencies are up-to-date", "CACHED:".green());
         }
     }
 

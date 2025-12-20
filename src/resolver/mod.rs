@@ -84,7 +84,8 @@ impl Resolver {
         let mut all_versions: HashMap<String, Vec<Artifact>> = HashMap::new();
         let mut visited = HashSet::new();
 
-        println!("{} Resolving graph", "TASK:".green());
+        // println!("{} Resolving graph", "TASK:".green());
+        task!("Resolving graph");
 
         while !queue.is_empty() {
             let mut next_queue = Vec::new();
@@ -127,7 +128,7 @@ impl Resolver {
                             }
                         }
 
-                        println!(" Resolved {} ({} deps)", art, pom_data.dependencies.len());
+                        info!(" Resolved {} ({} deps)", art, pom_data.dependencies.len());
 
                         for dep in pom_data.dependencies {
                             if dep.scope.as_ref().map_or(false, |s| s == "test" || s == "provided") {
@@ -137,7 +138,7 @@ impl Resolver {
                             let mut trans_art = dep.artifact;
 
                             if trans_art.version.is_empty() {
-                                eprintln!("{} No version for dependency {}", "WARN:".yellow(), trans_art);
+                                warn!("No version for dependency {}", trans_art);
                                 continue;
                             }
 
@@ -145,12 +146,12 @@ impl Resolver {
                                 match self.resolve_dynamic_version(&trans_art) {
                                     Ok(v) => trans_art.version = v,
                                     Err(e) => {
-                                        eprintln!(
-                                            "{} Failed to resolve dynamic version for {}: {}",
-                                            "ERROR:".red(),
+                                        error!(
+                                            "Failed to resolve dynamic version for {}: {}",
                                             trans_art,
                                             e
                                         );
+
                                         continue;
                                     }
                                 }
@@ -200,7 +201,7 @@ impl Resolver {
     fn resolve_version_conflicts(&mut self, all_versions: &HashMap<String, Vec<Artifact>>) {
         for (id, versions) in all_versions {
             if versions.len() > 1 {
-                println!(" Conflict detected for {}: {} versions found", id, versions.len());
+                note!(" Conflict detected for {}: {} versions found", id, versions.len());
             }
 
             let winner = versions.iter().max_by(|a, b| {
@@ -221,32 +222,32 @@ impl Resolver {
                 self.resolved_artifacts.insert(id.clone(), winner.clone());
 
                 if versions.len() > 1 {
-                    println!(" Selected version {} for {}", winner.version, id);
+                    info!(" Selected version {} for {}", winner.version, id);
                 }
             }
         }
     }
 
     pub fn download_all(&self) {
-        println!("{} Download dependencies", "TASK:".green());
+        task!("Download dependencies");
 
         self.resolved_artifacts.par_iter().for_each(|(_, art)| {
             let mut downloaded: Option<PathBuf> = None;
 
             if let Ok(path) = self.fetch_artifact(art, "aar") {
-                println!(" Aar: {}", art.name);
+                info!(" Aar: {}", art.name);
                 downloaded = Some(path);
 
                 if let Err(e) = crate::resolver::unpacker::unpack_aar(downloaded.as_ref().unwrap()) {
-                    eprintln!("{} unpack error {}: {}", "ERROR:".red(), art.name, e);
+                    error!("unpack error {}: {}", art.name, e);
                 }
             } else if let Ok(path) = self.fetch_artifact(art, "jar") {
-                println!(" Jar: {}", art.name);
+                info!(" Jar: {}", art.name);
                 downloaded = Some(path);
             }
 
             if downloaded.is_none() {
-                eprintln!("{} {}", "ERROR:".red(), art);
+                error!("{}", art);
             }
         });
     }
@@ -306,7 +307,7 @@ impl Resolver {
             }
 
             // Файл битый или пустой, желательно удалить
-            eprintln!("WARN: Removing corrupted metadata cache: {}", full_path.display());
+            warn!("Removing corrupted metadata cache: {}", full_path.display());
             let _ = fs::remove_file(&full_path);
         }
 
@@ -345,7 +346,7 @@ impl Resolver {
                 Err(e) => {
                     // Сетевая ошибка, можно логировать, но тут идёт попытка использовать другой
                     // репозиторий для скачивания (continue переходит к другому репо)
-                    eprintln!("{} Network error fetching metadata {}: {}", "WARN:".yellow(), url, e);
+                    warn!("Network error fetching metadata {}: {}", url, e);
                     continue;
                 }
             }
@@ -505,7 +506,7 @@ impl Resolver {
                 .unwrap_or(false);
 
             if !aar_ok && !jar_ok {
-                eprintln!("{} missing {}", "WARN:".yellow(), artifact);
+                warn!("missing {}", artifact);
                 return false;
             }
         }
