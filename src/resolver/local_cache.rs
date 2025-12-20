@@ -4,8 +4,8 @@
 // https://www.eclipse.org/legal/epl-2.0/
 // SPDX-License-Identifier: EPL-2.0
 
-use std::path::{Path, PathBuf};
 use std::fs;
+use std::path::PathBuf;
 
 use crate::resolver::artifact::Artifact;
 
@@ -16,20 +16,20 @@ pub struct LocalCache {
 impl LocalCache {
     pub fn new() -> Self {
         let home = dirs::home_dir().expect("Could not find home directory");
-        
+
         // Все зависимости выгружаются в HOME/.spawn/repository, это
         // глобальный кэш для всех spawn проектов
         let root = home.join(".spawn").join("repository");
-        
+
         fs::create_dir_all(&root).ok();
-        
+
         Self {
             root
         }
     }
 
     pub fn get_artifact_path(&self, artifact: &Artifact, ext: &str) -> PathBuf {
-        self.root.join(artifact.to_maven_path(ext))
+        self.root.join(artifact.get_path(ext))
     }
 
     pub fn exists(&self, artifact: &Artifact, ext: &str) -> bool {

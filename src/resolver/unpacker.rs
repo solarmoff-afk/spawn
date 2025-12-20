@@ -5,20 +5,20 @@
 // SPDX-License-Identifier: EPL-2.0
 
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::io::copy;
+use std::path::Path;
 use zip::ZipArchive;
 
-pub fn unpack_aar(aar_path: &Path) -> Result<PathBuf, Box<dyn std::error::Error>> {
+pub fn unpack_aar(aar_path: &Path) -> Result<std::path::PathBuf, Box<dyn std::error::Error>> {
     let out_dir = aar_path.parent().unwrap().join("unpacked");
-    
-    // если aar уже распакован то смысла тратить время нет
+
     if out_dir.exists() {
         return Ok(out_dir);
     }
 
     let file = fs::File::open(aar_path)?;
     let mut archive = ZipArchive::new(file)?;
-    
+
     fs::create_dir_all(&out_dir)?;
 
     for i in 0..archive.len() {
@@ -27,6 +27,7 @@ pub fn unpack_aar(aar_path: &Path) -> Result<PathBuf, Box<dyn std::error::Error>
         let raw_name = file.name().replace('\\', "/");
         let out_path = out_dir.join(&raw_name);
 
+        // Защита от zip slip
         if !out_path.starts_with(&out_dir) {
             return Err(format!("Security alert: Invalid path in archive: {}", raw_name).into());
         }
@@ -37,9 +38,8 @@ pub fn unpack_aar(aar_path: &Path) -> Result<PathBuf, Box<dyn std::error::Error>
             if let Some(p) = out_path.parent() {
                 fs::create_dir_all(p)?;
             }
-
             let mut outfile = fs::File::create(&out_path)?;
-            std::io::copy(&mut file, &mut outfile)?;
+            copy(&mut file, &mut outfile)?;
         }
     }
 

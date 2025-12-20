@@ -48,9 +48,16 @@ pub fn prepare(paths: Vec<String>) -> Result<parser::Config, Box<dyn std::error:
 
             resolver.resolve(root_deps);
             resolver.download_all();
+            
+            let all_downloaded = resolver.verify_all_artifacts_exist();
 
-            fs::create_dir_all(&cache_dir)?;
-            fs::write(&lock_file, current_fingerprint)?;
+            if all_downloaded {
+                fs::create_dir_all(&cache_dir)?;
+                fs::write(&lock_file, current_fingerprint)?;
+            }
+
+            eprintln!("{} Some dependencies failed to download. Cache lock not written", "WARN:".yellow());
+            eprintln!("Run the build again or check your network connection");
         } else {
             println!("{} Dependencies are up-to-date", "CACHED:".green());
         }
