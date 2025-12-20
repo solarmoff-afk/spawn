@@ -70,7 +70,9 @@ impl Resolver {
 
     pub fn resolve(&mut self, root_coords: Vec<String>) {
         let mut queue: Vec<Artifact> = root_coords.iter()
-            .filter_map(|c| Artifact::from_coords(c))
+            .filter_map(|c| {
+                Artifact::from_coords(c)
+            })
             .collect();
         let mut visited = HashSet::new();
 
@@ -83,8 +85,10 @@ impl Resolver {
 
                 if let Some(existing) = self.resolved_artifacts.get(&id) {
                     // семантическое сравнение версий
-                    if version_compare::compare(&art.version, &existing.version)
-                            .unwrap_or(version_compare::Cmp::Eq) != version_compare::Cmp::Gt {
+                    let cmp = version_compare::compare(&art.version, &existing.version)
+                        .unwrap_or(version_compare::Cmp::Eq);
+
+                    if cmp != version_compare::Cmp::Gt {
                         continue;
                     }
                 }
