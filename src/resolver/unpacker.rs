@@ -23,7 +23,13 @@ pub fn unpack_aar(aar_path: &Path) -> Result<PathBuf, Box<dyn std::error::Error>
 
     for i in 0..archive.len() {
         let mut file = archive.by_index(i)?;
-        let out_path = out_dir.join(file.name());
+
+        let raw_name = file.name().replace('\\', "/");
+        let out_path = out_dir.join(&raw_name);
+
+        if !out_path.starts_with(&out_dir) {
+            return Err(format!("Security alert: Invalid path in archive: {}", raw_name).into());
+        }
 
         if file.is_dir() {
             fs::create_dir_all(&out_path)?;
