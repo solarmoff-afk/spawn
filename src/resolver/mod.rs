@@ -75,60 +75,47 @@ impl Resolver {
                 parsed
             })
             .collect();
+        
+        let mut all_versions: HashMap<String, Vec<Artifact>> = HashMap::new();
         let mut visited = HashSet::new();
 
         println!("{} Resolving graph", "TASK:".green());
 
         while !queue.is_empty() {
             let mut next_queue = Vec::new();
+            
             for art in queue {
                 let id = art.id();
-                let mut proceed = false;
+                
+                let versions = all_versions.entry(id.clone())
+                    .or_insert_with(|| {
+                        let vec = Vec::new();
+                        vec
+                    });
 
-                if let Some(existing) = self.resolved_artifacts.get(&id) {
-                    // семантическое сравнение версий
-                    let cmp = version_compare::compare(&art.version, &existing.version)
-                        .unwrap_or(version_compare::Cmp::Eq);
-                    
-                    match cmp {
-                        version_compare::Cmp::Gt => {
-                            proceed = true;
-                        }
-                        
-                        version_compare::Cmp::Lt => {
-                            proceed = false;
-                        }
-                        
-                        version_compare::Cmp::Eq => {
-                            proceed = false;
-                        }
+                // Проверка на наличие дубликата версии перед добавлением
+                let is_duplicate = versions.iter().any(|existing| {
+                    existing.version == art.version
+                });
 
-                        _ => {
-                            proceed = true;
-                        }
-                    }
-                } else {
-                    proceed = true;
+                if !is_duplicate {
+                    versions.push(art.clone());
                 }
                 
-                if proceed {
-                    self.resolved_artifacts.insert(id.clone(), art.clone());
+                let fetch_result = self.fetch_artifact(&art, "pom");
+                if let Ok(pom_path) = fetch_result {
+                    let read_result = fs::read_to_string(pom_path);
+                    if let Ok(xml) = read_result {
+                        let pom_data = pom::parse(&xml, &art);
+                        println!(" Resolved {} ({} deps)", art, pom_data.dependencies.len());
 
-                    let fetch_result = self.fetch_artifact(&art, "pom");
-                    if let Ok(pom_path) = fetch_result {
-                        let read_result = fs::read_to_string(pom_path);
-                        if let Ok(xml) = read_result {
-                            let pom_data = pom::parse(&xml, &art);
-                            println!(" Resolved {} ({} deps)", art, pom_data.dependencies.len());
-                            
-                            for dep in pom_data.dependencies {
-                                let trans_art = dep.artifact;
-                                let v_id = format!("{}:{}", trans_art.id(), trans_art.version);
-                                
-                                if !visited.contains(&v_id) {
-                                    visited.insert(v_id);
-                                    next_queue.push(trans_art);
-                                }
+                        for dep in pom_data.dependencies {
+                            let trans_art = dep.artifact;
+                            let v_id = format!("{}:{}", trans_art.id(), trans_art.version);
+
+                            if !visited.contains(&v_id) {
+                                visited.insert(v_id);
+                                next_queue.push(trans_art);
                             }
                         }
                     }
@@ -136,6 +123,43 @@ impl Resolver {
             }
 
             queue = next_queue;
+        }
+
+        self.resolve_version_conflicts(&all_versions);
+    }
+
+    fn resolve_version_conflicts(&mut self, all_versions: &HashMap<String, Vec<Artifact>>) {
+        for (id, versions) in all_versions {
+            if versions.len() > 1 {
+                println!(" Conflict detected for {}: {} versions found", id, versions.len());
+            }
+
+            let mut highest_art: Option<&Artifact> = None;
+
+            for current in versions {
+                match highest_art {
+                    Some(existing) => {
+                        let cmp = version_compare::compare(&current.version, &existing.version)
+                            .unwrap_or(version_compare::Cmp::Eq);
+
+                        if cmp == version_compare::Cmp::Gt {
+                            highest_art = Some(current);
+                        }
+                    }
+                    None => {
+                        highest_art = Some(current);
+                    }
+                }
+            }
+
+            if let Some(winner) = highest_art {
+                // Сохранение итоговой версии артефакта после разрешения конфликтов
+                self.resolved_artifacts.insert(id.clone(), winner.clone());
+                
+                if versions.len() > 1 {
+                    println!(" Selected version {} for {}", winner.version, id);
+                }
+            }
         }
     }
 
