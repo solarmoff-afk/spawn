@@ -16,6 +16,6 @@ repositories = [
 #     "https://maven.aliyun.com/repository/public"
 # ]
 
-[dependencies]
-"androidx.appcompat:appcompat" = "1.6.1"
-"com.google.android.material:material" = "1.9.0"
+# [dependencies]
+# "androidx.appcompat:appcompat" = "1.6.1"
+# "com.google.android.material:material" = "1.9.0"

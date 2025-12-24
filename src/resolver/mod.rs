@@ -26,10 +26,10 @@ use crate::resolver::pom::{parse as parse_pom, process_imports, resolve_val, Pom
 
 pub struct Resolver {
     pub resolved_artifacts: HashMap<String, Artifact>,
+    pub cache_root: PathBuf,
 
     client: Client,
     repositories: Vec<String>,
-    cache_root: PathBuf,
 }
 
 impl Resolver {

@@ -26,8 +26,13 @@ fn main() {
                 panic!("No toml file provided");
             }
 
-            let config = frontend::prepare(paths)
-                .expect("Failed to prepare project");
+            let (config, resolver) = match frontend::prepare(paths) {
+                Ok(result) => result,
+                Err(e) => fatal!("Prepare failed: {}", e),
+            };
+
+            frontend::ninja_generator::generate_ninja(&config, resolver.as_ref(), "apk")
+                .expect("Generate ninja failed");
 
             println!("Build finish");
         },

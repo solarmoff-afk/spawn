@@ -19,6 +19,9 @@ pub struct Config {
     
     #[serde(skip)]
     pub base_path: PathBuf,
+
+    #[serde(skip)]
+    pub modules: Vec<PathBuf>,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -66,6 +69,7 @@ pub fn load_configs(paths: Vec<String>) -> Result<Config, Box<dyn std::error::Er
 
     let mut final_config = Config {
         base_path: base_dir,
+        modules: target_paths.clone(),
         ..Default::default()
     };
 
