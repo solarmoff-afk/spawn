@@ -13,11 +13,11 @@ use colored::Colorize;
 /// Если там ничего нет либо такого варианта нет в match, то это help, то есть
 /// вывести справку по использованию spawn
 pub enum Actions {
-    help = 0,
-    build_apk = 1,
-    build_aab = 2,
-    up = 3,
-    clean = 4,
+    Help = 0,
+    BuildApk = 1,
+    BuildAab = 2,
+    Up = 3,
+    Clean = 4,
 }
 
 /// Структура которая используется для глобального хранения аргументов системы
@@ -39,16 +39,16 @@ impl BuildSystem {
     pub fn get_action(&mut self) -> Actions {
         if self.args.len() >= 2 {
             return match self.args[1].as_str() {
-                "apk"   => Actions::build_apk,
-                "aab"   => Actions::build_aab,
-                "up"    => Actions::up,
-                "clean" => Actions::clean,
-                _       => Actions::help,
+                "apk"   => Actions::BuildApk,
+                "aab"   => Actions::BuildAab,
+                "up"    => Actions::Up,
+                "clean" => Actions::Clean,
+                _       => Actions::Help,
             }
         }
 
         // Если аргументов меньше 2 то возвращаем help
-        return Actions::help;
+        return Actions::Help;
     }
 
     /// [WAIT DOC]

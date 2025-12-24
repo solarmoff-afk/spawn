@@ -19,7 +19,7 @@ fn main() {
     let action = build_system.get_action();
 
     match action {
-        Actions::build_apk => {
+        Actions::BuildApk => {
             let paths = get_paths(build_system.args.clone());
             if paths.is_empty() {
                 build_system.print_help();
@@ -37,7 +37,7 @@ fn main() {
             println!("Build finish");
         },
 
-        Actions::help => {
+        Actions::Help => {
             build_system.print_help();
         },
 

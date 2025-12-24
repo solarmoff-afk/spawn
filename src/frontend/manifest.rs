@@ -5,7 +5,6 @@
 // SPDX-License-Identifier: EPL-2.0
 
 use std::fs;
-use std::path::PathBuf;
 use std::error::Error;
 
 use crate::parser;

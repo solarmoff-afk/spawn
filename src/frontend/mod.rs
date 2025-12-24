@@ -8,7 +8,6 @@ pub mod manifest;
 pub mod ninja_generator;
 
 use std::fs;
-use std::path::PathBuf;
 use sha2::{Sha256, Digest};
 use colored::Colorize;
 use dirs::home_dir;
@@ -84,7 +83,7 @@ fn generate_fingerprint(config: &parser::Config) -> String {
     if let Some(deps) = &config.dependencies {
         let mut sorted: Vec<_> = deps.iter().collect();
         sorted.sort_by_key(|a| a.0);
-        
+
         for (k, v) in sorted {
             hasher.update(k.as_bytes());
             hasher.update(b":");

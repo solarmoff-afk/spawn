@@ -5,7 +5,6 @@
 // SPDX-License-Identifier: EPL-2.0
 
 pub mod artifact;
-pub mod local_cache;
 pub mod pom;
 mod unpacker;
 
@@ -254,7 +253,7 @@ impl Resolver {
 
     fn fetch_artifact(&self, art: &Artifact, ext: &str) -> Result<PathBuf, String> {
         let mut rel_path = art.get_path(ext);
-        let mut file_name = format!("{}-{}.{}", art.name, art.version, ext);
+        let file_name;
 
         if art.is_snapshot() {
             let snapshot_version = self.resolve_snapshot(art, ext)?;
@@ -339,7 +338,7 @@ impl Resolver {
                         Err(e) => return Err(format!("Failed to read response text: {}", e)),
                     }
                 }
-                Ok(resp) => {
+                Ok(_resp) => {
                     // Если 200 просто идём дальше
                     continue;
                 }
